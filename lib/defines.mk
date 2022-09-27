@@ -1,4 +1,4 @@
-CFLAGS ?= -O2 -g
+CFLAGS ?= -g
 BPF_CFLAGS ?= -Wno-visibility
 BPF_TARGET ?= bpf
 
