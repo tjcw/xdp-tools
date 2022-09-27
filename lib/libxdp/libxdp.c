@@ -775,7 +775,7 @@ static const struct btf_type *btf_get_datasec(const struct btf *btf,
 		if (!btf_is_datasec(t))
 			continue;
 		name = btf__name_by_offset(btf, t->name_off);
-		pr_debug("btf_get_datasec looking for %s found %s\n",sec_name,name);
+		pr_warn("btf_get_datasec looking for %s found %s\n",sec_name,name);
 		if (strcmp(name, sec_name) == 0)
 			return t;
 	}
