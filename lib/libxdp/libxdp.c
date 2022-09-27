@@ -1803,7 +1803,9 @@ int check_xdp_prog_version(const struct btf *btf, const char *name, __u32 *versi
 {
 	const struct btf_type *sec, *def;
 
-	sec = btf_get_datasec(btf, XDP_METADATA_SECTION);
+	const char *xdp_metadata_section=XDP_METADATA_SECTION ;
+	pr_warn("xdp_metadata_section=%s\n", xdp_metadata_section);
+	sec = btf_get_datasec(btf, xdp_metadata_section);
 	if (!sec)
 		return libxdp_err(-ENOENT);
 
