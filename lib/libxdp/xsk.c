@@ -552,6 +552,7 @@ static int xsk_lookup_bpf_map(int prog_fd)
 	}
 
 	free(map_ids);
+	pr_warn("xsk_lookup_bpf_map returns %d\n", xsks_map_fd);
 	return xsks_map_fd;
 }
 
