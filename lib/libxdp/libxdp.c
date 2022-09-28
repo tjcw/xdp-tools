@@ -164,8 +164,8 @@ static inline struct xdp_program *xdp_program__find_embedded(__unused const char
 static int __base_pr(enum libxdp_print_level level, const char *format,
 		     va_list args)
 {
-	if (level == LIBXDP_DEBUG)
-		return 0;
+//	if (level == LIBXDP_DEBUG)
+//		return 0;
 
 	return vfprintf(stderr, format, args);
 }
