@@ -9,7 +9,8 @@
 #include "logging.h"
 #include "util.h"
 
-static enum logging_print_level log_level = LOG_INFO;
+//static enum logging_print_level log_level = LOG_INFO;
+static enum logging_print_level log_level = LOG_VERBOSE;
 
 static int print_func(enum logging_print_level level, const char *format,
 		      va_list args)
