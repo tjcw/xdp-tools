@@ -294,6 +294,7 @@ bpf_program_by_section_name(const struct bpf_object *obj,
 	struct bpf_program *pos;
 	const char *sname;
 
+	pr_debug("bpf_program_by_section_name looking for section %s\n", section_name);
 	bpf_object__for_each_program(pos, obj) {
 		sname = bpf_program__section_name(pos);
 		if (sname && !strcmp(sname, section_name))
