@@ -1024,7 +1024,9 @@ int xsk_socket__create_shared(struct xsk_socket **xsk_ptr,
 		goto out_mmap_tx;
 	}
 
+	pr_debug("libbpf_flags=0x%08x\n", xsk->config.libbpf_flags);
 	if (!(xsk->config.libbpf_flags & XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD)) {
+		pr_debug("Loading default eBPF program\n") ;
 		err = __xsk_setup_xdp_prog(xsk, NULL);
 		if (err)
 			goto out_mmap_tx;
