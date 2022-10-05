@@ -878,6 +878,8 @@ int xsk_socket__create_shared(struct xsk_socket **xsk_ptr,
 	socklen_t optlen;
 	bool unmap;
 
+	pr_debug("xsk_socket__create_shared ifname=%s queue_id=%u\n", ifname, queue_id);
+
 	if (!umem || !xsk_ptr || !(rx || tx))
 		return -EFAULT;
 
