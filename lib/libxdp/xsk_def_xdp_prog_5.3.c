@@ -31,7 +31,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 //	 */
 	if (bpf_map_lookup_elem(&xsks_map, &index))
 		return bpf_redirect_map(&xsks_map, index, 0);
-//	return XDP_PASS;
+	return XDP_PASS;
 
 }
 
