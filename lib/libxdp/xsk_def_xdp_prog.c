@@ -26,7 +26,8 @@ struct datarec {
 #endif
 
 enum {
-	k_tracing = 1
+	k_tracing = 0,
+	k_tracing_detail = 0
 };
 
 struct {
@@ -125,7 +126,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 	/* A set entry here means that the corresponding queue_id
 	 * has an active AF_XDP socket bound to it.
 	 */
-	display_all() ;
+	if(k_tracing_detail) display_all() ;
     int index = ctx->rx_queue_index;
 	/* A set entry here means that the correspnding queue_id
 	 * has an active AF_XDP socket bound to it. */
@@ -211,7 +212,7 @@ SEC("xdp")
 int xsk_def_prog(struct xdp_md *ctx)
 {
 
-//	display_all() ;
+	if(k_tracing_detail) display_all() ;
     int index = ctx->rx_queue_index;
 	/* A set entry here means that the correspnding queue_id
 	 * has an active AF_XDP socket bound to it. */
@@ -250,6 +251,10 @@ int xsk_def_prog(struct xdp_md *ctx)
 				if( k_tracing ) bpf_printk("protocol=%d\n", protocol) ;
 				if ( protocol == IPPROTO_UDP ) {
 					action = XDP_DROP ;
+					goto out;
+				}
+				if ( protocol == IPPROTO_ICMP ) {
+					action = XDP_PASS ;
 					goto out;
 				}
 
