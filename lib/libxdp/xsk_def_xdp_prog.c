@@ -218,6 +218,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
 	if( k_tracing ) bpf_printk("index=%d mapped=%p\n", index, mapped) ;
 
+	return XDP_PASS;
     __u32 action = XDP_PASS; /* Default action */
     if (mapped)
     {
