@@ -24,7 +24,7 @@ struct {
 SEC("xdp")
 int xsk_def_prog(struct xdp_md *ctx)
 {
-//	int index = ctx->rx_queue_index;
+	int index = ctx->rx_queue_index;
 //
 //	/* A set entry here means that the corresponding queue_id
 //	 * has an active AF_XDP socket bound to it.
