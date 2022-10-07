@@ -24,7 +24,7 @@ struct {
 	__uint(XDP_PASS, 1);
 } XDP_RUN_CONFIG(xsk_def_prog);
 
-tatic __always_inline void display_one(int index) {
+static __always_inline void display_one(int index) {
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
 //	if(mapped != NULL) {
 		bpf_printk("index%d mapped=%p\n", index, mapped) ;
