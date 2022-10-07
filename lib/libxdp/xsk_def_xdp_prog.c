@@ -208,7 +208,7 @@ static __always_inline int parse_ip4hdr(struct hdr_cursor *nh,
 
 
 SEC("xdp")
-int xdp_def_prog(struct xdp_md *ctx)
+int xsk_def_prog(struct xdp_md *ctx)
 {
 
 //	display_all() ;
