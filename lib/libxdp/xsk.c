@@ -696,8 +696,10 @@ static int __xsk_setup_xdp_prog(struct xsk_socket *xsk, int *xsks_map_fd)
 	if (IS_ERR(ctx->xdp_prog))
 		return PTR_ERR(ctx->xdp_prog);
 
+	pr_debug("ctx->xdp_prog=%p\n", ctx->xdp_prog) ;
 	if (!ctx->xdp_prog) {
 		file_name = xsk_check_redirect_flags() ? default_prog : fallback_prog;
+		pr_debug("loading file %s\n", file_name);
 		ctx->xdp_prog = xdp_program__find_file(file_name, NULL, NULL);
 		if (IS_ERR(ctx->xdp_prog))
 			return PTR_ERR(ctx->xdp_prog);
