@@ -1,12 +1,28 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 #include <linux/bpf.h>
+#include <linux/in.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+
+#include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 #include <xdp/xdp_helpers.h>
 
 #include "xsk_def_xdp_prog.h"
 
 #define DEFAULT_QUEUE_IDS 64
+
+/* This is the data record stored in the map */
+struct datarec {
+	__u64 rx_packets;
+	/* Assignment#1: Add byte counters */
+	__u64 rx_bytes;
+};
+
+#ifndef XDP_ACTION_MAX
+#define XDP_ACTION_MAX (XDP_REDIRECT + 1)
+#endif
 
 enum {
 	k_tracing = 1
