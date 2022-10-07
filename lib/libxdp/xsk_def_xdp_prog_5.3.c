@@ -24,13 +24,13 @@ struct {
 SEC("xdp")
 int xsk_def_prog(struct xdp_md *ctx)
 {
-	int index = ctx->rx_queue_index;
-
-	/* A set entry here means that the corresponding queue_id
-	 * has an active AF_XDP socket bound to it.
-	 */
-	if (bpf_map_lookup_elem(&xsks_map, &index))
-		return bpf_redirect_map(&xsks_map, index, 0);
+//	int index = ctx->rx_queue_index;
+//
+//	/* A set entry here means that the corresponding queue_id
+//	 * has an active AF_XDP socket bound to it.
+//	 */
+//	if (bpf_map_lookup_elem(&xsks_map, &index))
+//		return bpf_redirect_map(&xsks_map, index, 0);
 	return XDP_PASS;
 
 }
