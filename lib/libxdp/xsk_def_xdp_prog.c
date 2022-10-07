@@ -42,7 +42,6 @@ struct {
 	__uint(XDP_PASS, 1);
 } XDP_RUN_CONFIG(xsk_def_prog);
 
-#if 0
 static __always_inline void display_one(int index) {
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
 //	if(mapped != NULL) {
@@ -116,7 +115,6 @@ static __always_inline void display_all(void) {
 	display_one(62) ;
 	display_one(63) ;
 }
-#endif
 
 #if 0
 /* This is the program for post 5.3 kernels. */
