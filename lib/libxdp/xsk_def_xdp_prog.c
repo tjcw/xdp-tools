@@ -8,6 +8,10 @@
 
 #define DEFAULT_QUEUE_IDS 64
 
+enum {
+	k_tracing = 1
+};
+
 struct {
 	__uint(type, BPF_MAP_TYPE_XSKMAP);
 	__uint(key_size, sizeof(int));
