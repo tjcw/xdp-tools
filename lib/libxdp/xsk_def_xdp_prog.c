@@ -44,9 +44,7 @@ struct {
 
 static __always_inline void display_one(int index) {
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
-//	if(mapped != NULL) {
-		bpf_printk("index%d mapped=%p\n", index, mapped) ;
-//	}
+	bpf_printk("xsks_map[%d]=%p\n", index, mapped) ;
 }
 
 static __always_inline void display_all(void) {
@@ -117,7 +115,7 @@ static __always_inline void display_all(void) {
 }
 
 #if 0
-/* This is the program for post 5.3 kernels. */
+/* This is the supplied libxdp default program for post 5.3 kernels. */
 SEC("xdp")
 int xsk_def_prog(struct xdp_md *ctx)
 {
@@ -129,8 +127,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 	/* A set entry here means that the correspnding queue_id
 	 * has an active AF_XDP socket bound to it. */
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
-	if( k_tracing ) bpf_printk("index=%d mapped=%p\n", index, mapped) ;
-//	return XDP_PASS;
+	if( k_tracing ) bpf_printk("xsks[%d]=%p\n", index, mapped) ;
 	return bpf_redirect_map(&xsks_map, ctx->rx_queue_index, XDP_PASS);
 }
 #endif
@@ -215,9 +212,8 @@ int xsk_def_prog(struct xdp_md *ctx)
 	/* A set entry here means that the correspnding queue_id
 	 * has an active AF_XDP socket bound to it. */
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
-	if( k_tracing ) bpf_printk("index=%d mapped=%p\n", index, mapped) ;
+	if( k_tracing ) bpf_printk("xsks_map[%d]=%p\n", index, mapped) ;
 
-//	return XDP_PASS;
     __u32 action = XDP_PASS; /* Default action */
     if (mapped)
     {
@@ -258,6 +254,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 
 			}
 
+		stats_record_action(ctx, XDP_REDIRECT);
 		if( k_tracing ) bpf_printk("returning through bpf_redirect_map\n");
 		return bpf_redirect_map(&xsks_map, index, 0);
     }
