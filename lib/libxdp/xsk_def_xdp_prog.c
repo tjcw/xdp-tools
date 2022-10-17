@@ -30,12 +30,37 @@ enum {
 	k_tracing_detail = 0
 };
 
+enum {
+	k_hashmap_size = 64
+};
+
+enum action_enum {
+	k_action_redirect ,
+	k_action_pass ,
+	k_action_drop
+}  ;
 struct {
 	__uint(type, BPF_MAP_TYPE_XSKMAP);
 	__uint(key_size, sizeof(int));
 	__uint(value_size, sizeof(int));
 	__uint(max_entries, DEFAULT_QUEUE_IDS);
 } xsks_map SEC(".maps");
+
+struct fivetuple {
+	__u32 saddr ; // Source address (network byte order)
+	__u32 daddr ; // Destination address (network byte order)
+	__u16 sport ; // Source port (network byte order) use 0 for ICMP
+	__u16 dport ; // Destination port (network byte order) use 0 for ICMP
+	__u8 protocol ; // Protocol
+};
+
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH) ;
+	__uint(key_size, sizeof(struct fivetuple)) ;
+	__uint(value_size, sizeof(enum action_enum)) ;
+	__uint(max_entries, k_hashmap_size) ;
+} accept_map SEC(".maps");
+
 
 struct {
 	__uint(priority, 20);
@@ -214,7 +239,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 	void * mapped=bpf_map_lookup_elem(&xsks_map, &index) ;
 	if( k_tracing ) bpf_printk("xsks_map[%d]=%p\n", index, mapped) ;
 
-    __u32 action = XDP_PASS; /* Default action */
+    enum action_enum action = XDP_PASS; /* Default action */
     if (mapped)
     {
     	void *data_end = (void *)(long)ctx->data_end;
@@ -243,20 +268,31 @@ int xsk_def_prog(struct xdp_md *ctx)
 
 				int protocol=iphdr->protocol;
 				if( k_tracing ) bpf_printk("protocol=%d\n", protocol) ;
-				if ( protocol == IPPROTO_UDP ) {
-					action = XDP_DROP ;
-					goto out;
-				}
-//				if ( protocol == IPPROTO_ICMP ) {
-//					action = XDP_PASS ;
-//					goto out;
-//				}
 
+				struct fivetuple f ;
+				f->protocol = IPPROTO_UDP ;
+				f.saddr = iphdr->saddr ;
+				f.daddr = iphdr->daddr ;
+				if ( protocol == IPPROTO_TCP ) {
+					struct tcphdr *t= (struct tcphdr *)(iphdr+1) ;
+					f.sport = t->source ;
+					f.dport = t->dest ;
+					void * v_permit=bpf_map_lookup_elem(&accept_map, &f) ;
+					action = *(enum action_enum *) v_permit ;
+				} else if ( protocol == IPPROTO_UDP ) {
+					struct udphdr *u = (struct udphdr *)(iphdr+1) ;
+					f.sport = u->source ;
+					f.dport = u->dest ;
+					void * v_permit=bpf_map_lookup_elem(&accept_map, &f) ;
+					action = *(enum action_enum *) v_permit ;
+				}
 			}
 
-		stats_record_action(ctx, XDP_REDIRECT);
-		if( k_tracing ) bpf_printk("returning through bpf_redirect_map\n");
-		return bpf_redirect_map(&xsks_map, index, 0);
+		if ( action == k_action_redirect) {
+			stats_record_action(ctx, XDP_REDIRECT);
+			if( k_tracing ) bpf_printk("returning through bpf_redirect_map\n");
+			return bpf_redirect_map(&xsks_map, index, 0);
+		}
     }
 out:
 	return stats_record_action(ctx, action); /* read via xdp_stats */
