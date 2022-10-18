@@ -30,7 +30,7 @@ PC_FILE := $(OBJDIR)/libxdp.pc
 TEMPLATED_SOURCES := xdp-dispatcher.c
 
 CFLAGS += -I$(HEADER_DIR)
-BPF_CFLAGS += -I$(HEADER_DIR)
+BPF_CFLAGS += -g -I$(HEADER_DIR)
 
 
 ifndef BUILD_STATIC_ONLY
