@@ -1433,7 +1433,7 @@ struct xdp_program *xdp_program__clone(struct xdp_program *prog, unsigned int fl
 }
 
 
-static int xdp_program__attach_single(struct xdp_program *prog, int ifindex,
+int xdp_program__attach_single(struct xdp_program *prog, int ifindex,
 				      enum xdp_attach_mode mode)
 {
 	int err;
