@@ -8,6 +8,9 @@
 
 #define DEFAULT_QUEUE_IDS 64
 
+enum {
+	k_tracing_detail = 0
+};
 struct {
 	__uint(type, BPF_MAP_TYPE_XSKMAP);
 	__uint(key_size, sizeof(int));
@@ -99,6 +102,7 @@ int xsk_def_prog(struct xdp_md *ctx)
 	/* A set entry here means that the corresponding queue_id
 	 * has an active AF_XDP socket bound to it.
 	 */
+	if ( k_tracing_detail ) display_all() ;
 	display_one(ctx->rx_queue_index);
 	return bpf_redirect_map(&xsks_map, ctx->rx_queue_index, XDP_PASS);
 }
