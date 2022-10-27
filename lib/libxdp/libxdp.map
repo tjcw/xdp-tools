@@ -72,4 +72,5 @@ LIBXDP_1.3.0 {
 		xdp_program__clone;
 		xdp_program__create;
 		xdp_program__attach_single;
+		my_fetch_xsks_map_fd;
 } LIBXDP_1.2.0;

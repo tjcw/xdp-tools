@@ -161,6 +161,10 @@ struct xdp_program_opts {
 
 struct xdp_program *xdp_program__create(struct xdp_program_opts *opts);
 
+int my_fetch_xsks_map_fd(
+		const char *ifname,
+		struct xdp_program *xdp_prog)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

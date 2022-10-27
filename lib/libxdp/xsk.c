@@ -739,6 +739,21 @@ out:
 	return prog;
 }
 
+int my_fetch_xsks_map_fd(
+		const char *ifname,
+		struct xdp_program *xdp_prog)
+{
+	int err;
+	int fd;
+	err = xsk_size_map(xdp_prog, ifname);
+	if (err)
+		goto err_prog_load;
+
+	fd =  xsk_lookup_bpf_map(xdp_program__fd(xdp_prog));
+	return fd;
+err_prog_load:
+	return err;
+}
 static int __xsk_setup_xdp_prog(struct xsk_socket *xsk, int *xsks_map_fd)
 {
 	const char *fallback_prog = "xsk_def_xdp_prog_5.3.o";
