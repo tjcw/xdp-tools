@@ -745,7 +745,7 @@ int my_fetch_xsks_map_fd(
 {
 	int err;
 	int fd;
-	err = xsk_size_map(xdp_prog, ifname);
+	err = xsk_size_map(xdp_prog, (char *) ifname);
 	if (err)
 		goto err_prog_load;
 
