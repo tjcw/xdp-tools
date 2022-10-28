@@ -483,18 +483,18 @@ static int xsk_size_map(struct xdp_program *xdp_prog, char *ifname)
 	int err;
 
 	max_queues = xsk_get_max_queues(ifname);
-	fprintf(stderr, "xsk_size_map max_queues=%d\n", max_queues) ;
+	pr_debug("xsk_size_map max_queues=%d\n", max_queues) ;
 	if (max_queues < 0)
 		return max_queues;
 
 	map = bpf_object__find_map_by_name(bpf_obj, "xsks_map");
-	fprintf(stderr, "xsk_size_map bpf_object__find_map_by_name(%p, ...) ---> %p",
+	pr_debug("xsk_size_map bpf_object__find_map_by_name(%p, ...) ---> %p\n",
 			bpf_obj, map) ;
 	if (!map)
 		return -ENOENT;
 
 	err = bpf_map__set_max_entries(map, max_queues);
-	fprintf(stderr, "xsk_size_map bpf_map__set_max_entries(%p, %d) --> %d\n",
+	pr_debug("xsk_size_map bpf_map__set_max_entries(%p, %d) --> %d\n",
 			map,max_queues,err) ;
 	if (err)
 		return err;
@@ -755,7 +755,9 @@ int my_fetch_xsks_map_fd(
 		goto err_prog_load;
 
 	int program_fd=xdp_program__fd(xdp_prog);
+	pr_debug("my_fetch_xsks_map_fd program_fd=%d\n", program_fd) ;
 	fd =  xsk_lookup_bpf_map(program_fd);
+	pr_debug("my_fetch_xsks_map_fd fd=%d\n", fd) ;
 	return fd;
 err_prog_load:
 	return err;
