@@ -754,6 +754,7 @@ int my_fetch_xsks_map_fd(
 	if (err)
 		goto err_prog_load;
 
+	pr_debug("my_fetch_xsks_map_fd xdp_prog=%p\n", xdp_prog) ;
 	int program_fd=xdp_program__fd(xdp_prog);
 	pr_debug("my_fetch_xsks_map_fd program_fd=%d\n", program_fd) ;
 	fd =  xsk_lookup_bpf_map(program_fd);
