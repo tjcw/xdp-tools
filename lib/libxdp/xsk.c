@@ -830,6 +830,140 @@ err_prog_load:
 	return err;
 }
 
+static int __xsk_setup_named_xdp_prog(struct xsk_socket *xsk, const char * named_prog, int *xsks_map_fd)
+{
+//	const char *fallback_prog = "xsk_def_xdp_prog_5.3.o";
+//	const char *default_prog = "xsk_def_xdp_prog.o";
+	struct xsk_ctx *ctx = xsk->ctx;
+	const char *file_name;
+	bool attached = false;
+	int err;
+
+	ctx->xdp_prog = xsk_lookup_program(ctx->ifindex);
+	if (IS_ERR(ctx->xdp_prog))
+		return PTR_ERR(ctx->xdp_prog);
+
+	pr_debug("ctx->xdp_prog=%p\n", ctx->xdp_prog) ;
+	if (!ctx->xdp_prog) {
+		file_name = named_prog ; // xsk_check_redirect_flags() ? default_prog : fallback_prog;
+		pr_debug("loading file %s\n", file_name);
+		ctx->xdp_prog = xdp_program__find_file(file_name, NULL, NULL);
+		if (IS_ERR(ctx->xdp_prog))
+			return PTR_ERR(ctx->xdp_prog);
+
+		err = xsk_size_map(ctx->xdp_prog, ctx->ifname);
+		if (err)
+			goto err_prog_load;
+
+		err = xdp_program__attach(ctx->xdp_prog, ctx->ifindex,
+					  xsk_convert_xdp_flags(xsk->config.xdp_flags), 0);
+		if (err)
+			goto err_prog_load;
+
+		attached = true;
+	}
+
+	ctx->xsks_map_fd = xsk_lookup_bpf_map(xdp_program__fd(ctx->xdp_prog));
+	if (ctx->xsks_map_fd < 0) {
+		err = ctx->xsks_map_fd;
+		goto err_lookup;
+	}
+
+//	ctx->xsks_map2_fd = xsk_lookup_bpf_map2(xdp_program__fd(ctx->xdp_prog));
+
+	if (xsk->rx) {
+		err = bpf_map_update_elem(ctx->xsks_map_fd, &ctx->queue_id, &xsk->fd, 0);
+		if (err)
+			goto err_lookup;
+//		if (ctx->xsks_map2_fd >= 0) {
+//			err = bpf_map_update_elem(ctx->xsks_map2_fd, &ctx->queue_id, &xsk->fd, 0);
+//			pr_warn("__xsk_setup_xdp_prog xsks_map2_fd=%d bpf_map_update_elem err=%d", ctx->xsks_map2_fd, err);
+//			if (err)
+//				goto err_lookup;
+//		}
+	}
+	if (xsks_map_fd)
+		*xsks_map_fd = ctx->xsks_map_fd;
+
+	return 0;
+
+err_lookup:
+	if (attached)
+		xdp_program__detach(ctx->xdp_prog, ctx->ifindex,
+				    xsk_convert_xdp_flags(xsk->config.xdp_flags), 0);
+err_prog_load:
+	xdp_program__close(ctx->xdp_prog);
+	ctx->xdp_prog = NULL;
+	return err;
+}
+
+//static int my__xsk_setup_xdp_prog_without_default_prog(struct xsk_socket *xsk, int *xsks_map_fd)
+//{
+////	const char *fallback_prog = "xsk_def_xdp_prog_5.3.o";
+////	const char *default_prog = "xsk_def_xdp_prog.o";
+//	struct xsk_ctx *ctx = xsk->ctx;
+//	const char *file_name;
+//	bool attached = false;
+//	int err;
+//
+//	ctx->xdp_prog = xsk_lookup_program(ctx->ifindex);
+//	if (IS_ERR(ctx->xdp_prog))
+//		return PTR_ERR(ctx->xdp_prog);
+//
+//	pr_debug("ctx->xdp_prog=%p\n", ctx->xdp_prog) ;
+//	if (!ctx->xdp_prog) {
+//		file_name = xsk_check_redirect_flags() ? default_prog : fallback_prog;
+//		pr_debug("loading file %s\n", file_name);
+//		ctx->xdp_prog = xdp_program__find_file(file_name, NULL, NULL);
+//		if (IS_ERR(ctx->xdp_prog))
+//			return PTR_ERR(ctx->xdp_prog);
+//
+//		err = xsk_size_map(ctx->xdp_prog, ctx->ifname);
+//		if (err)
+//			goto err_prog_load;
+//
+//		err = xdp_program__attach(ctx->xdp_prog, ctx->ifindex,
+//					  xsk_convert_xdp_flags(xsk->config.xdp_flags), 0);
+//		if (err)
+//			goto err_prog_load;
+//
+//		attached = true;
+//	}
+//
+//	ctx->xsks_map_fd = xsk_lookup_bpf_map(xdp_program__fd(ctx->xdp_prog));
+//	if (ctx->xsks_map_fd < 0) {
+//		err = ctx->xsks_map_fd;
+//		goto err_lookup;
+//	}
+//
+////	ctx->xsks_map2_fd = xsk_lookup_bpf_map2(xdp_program__fd(ctx->xdp_prog));
+//
+//	if (xsk->rx) {
+//		err = bpf_map_update_elem(ctx->xsks_map_fd, &ctx->queue_id, &xsk->fd, 0);
+//		if (err)
+//			goto err_lookup;
+////		if (ctx->xsks_map2_fd >= 0) {
+////			err = bpf_map_update_elem(ctx->xsks_map2_fd, &ctx->queue_id, &xsk->fd, 0);
+////			pr_warn("__xsk_setup_xdp_prog xsks_map2_fd=%d bpf_map_update_elem err=%d", ctx->xsks_map2_fd, err);
+////			if (err)
+////				goto err_lookup;
+////		}
+//	}
+//	if (xsks_map_fd)
+//		*xsks_map_fd = ctx->xsks_map_fd;
+//
+//	return 0;
+//
+//err_lookup:
+//	if (attached)
+//		xdp_program__detach(ctx->xdp_prog, ctx->ifindex,
+//				    xsk_convert_xdp_flags(xsk->config.xdp_flags), 0);
+//err_prog_load:
+//	xdp_program__close(ctx->xdp_prog);
+//	ctx->xdp_prog = NULL;
+//	return err;
+//}
+
 static struct xsk_ctx *xsk_get_ctx(struct xsk_umem *umem, __u64 netns_cookie, int ifindex, __u32 queue_id)
 {
 	struct xsk_ctx *ctx;
@@ -947,6 +1081,28 @@ int xsk_setup_xdp_prog(int ifindex, int *xsks_map_fd)
 
 	return res;
 }
+
+//int my_xsk_setup_xdp_prog_without_default_prog(int ifindex, int *xsks_map_fd)
+//{
+//	struct xsk_socket *xsk;
+//	int res;
+//
+//	xsk = calloc(1, sizeof(*xsk));
+//	if (!xsk)
+//		return -ENOMEM;
+//
+//	res = xsk_init_xsk_struct(xsk, ifindex);
+//	if (res) {
+//		free(xsk);
+//		return -EINVAL;
+//	}
+//
+//	res = my__xsk_setup_xdp_prog_without_default_prog(xsk, xsks_map_fd);
+//
+//	xsk_destroy_xsk_struct(xsk);
+//
+//	return res;
+//}
 
 int xsk_socket__create_shared(struct xsk_socket **xsk_ptr,
 			      const char *ifname,
@@ -1148,6 +1304,208 @@ out_xsk_alloc:
 	return err;
 }
 
+int xsk_socket__create_shared_named_prog(struct xsk_socket **xsk_ptr,
+			      const char *ifname,
+			      __u32 queue_id, struct xsk_umem *umem,
+			      struct xsk_ring_cons *rx,
+			      struct xsk_ring_prod *tx,
+			      struct xsk_ring_prod *fill,
+			      struct xsk_ring_cons *comp,
+			      const struct xsk_socket_config *usr_config,
+				  const char *named_prog)
+{
+	bool rx_setup_done = false, tx_setup_done = false;
+	void *rx_map = NULL, *tx_map = NULL;
+	struct sockaddr_xdp sxdp = {};
+	struct xdp_mmap_offsets off;
+	struct xsk_socket *xsk;
+	struct xsk_ctx *ctx;
+	int err, ifindex;
+	__u64 netns_cookie;
+	socklen_t optlen;
+	bool unmap;
+
+	pr_debug("xsk_socket__create_shared_named_prog ifname=%s queue_id=%u named_prog=%s\n",
+			ifname, queue_id, named_prog);
+
+	if (!umem || !xsk_ptr || !(rx || tx))
+		return -EFAULT;
+
+	xsk = calloc(1, sizeof(*xsk));
+	if (!xsk)
+		return -ENOMEM;
+
+	err = xsk_set_xdp_socket_config(&xsk->config, usr_config);
+	if (err)
+		goto out_xsk_alloc;
+
+	ifindex = if_nametoindex(ifname);
+	if (!ifindex) {
+		err = -errno;
+		goto out_xsk_alloc;
+	}
+
+	if (umem->refcount++ > 0) {
+		xsk->fd = socket(AF_XDP, SOCK_RAW, 0);
+		if (xsk->fd < 0) {
+			err = -errno;
+			goto out_xsk_alloc;
+		}
+	} else {
+		xsk->fd = umem->fd;
+		rx_setup_done = umem->rx_ring_setup_done;
+		tx_setup_done = umem->tx_ring_setup_done;
+	}
+
+	optlen = sizeof(netns_cookie);
+	err = getsockopt(xsk->fd, SOL_SOCKET, SO_NETNS_COOKIE, &netns_cookie, &optlen);
+	if (err) {
+		if (errno != ENOPROTOOPT) {
+			err = -errno;
+			goto out_socket;
+		}
+		netns_cookie = INIT_NS;
+	}
+
+	ctx = xsk_get_ctx(umem, netns_cookie, ifindex, queue_id);
+	if (!ctx) {
+		if (!fill || !comp) {
+			err = -EFAULT;
+			goto out_socket;
+		}
+
+		ctx = xsk_create_ctx(xsk, umem, netns_cookie, ifindex, ifname, queue_id,
+				     fill, comp);
+		if (!ctx) {
+			err = -ENOMEM;
+			goto out_socket;
+		}
+	}
+	xsk->ctx = ctx;
+
+	if (rx && !rx_setup_done) {
+		err = setsockopt(xsk->fd, SOL_XDP, XDP_RX_RING,
+				 &xsk->config.rx_size,
+				 sizeof(xsk->config.rx_size));
+		if (err) {
+			err = -errno;
+			goto out_put_ctx;
+		}
+		if (xsk->fd == umem->fd)
+			umem->rx_ring_setup_done = true;
+
+	}
+	if (tx && !tx_setup_done) {
+		err = setsockopt(xsk->fd, SOL_XDP, XDP_TX_RING,
+				 &xsk->config.tx_size,
+				 sizeof(xsk->config.tx_size));
+		if (err) {
+			err = -errno;
+			goto out_put_ctx;
+		}
+		if (xsk->fd == umem->fd)
+			umem->rx_ring_setup_done = true;
+	}
+
+	err = xsk_get_mmap_offsets(xsk->fd, &off);
+	if (err) {
+		err = -errno;
+		goto out_put_ctx;
+	}
+
+	if (rx) {
+		rx_map = mmap(NULL, off.rx.desc +
+			      xsk->config.rx_size * sizeof(struct xdp_desc),
+			      PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE,
+			      xsk->fd, XDP_PGOFF_RX_RING);
+		if (rx_map == MAP_FAILED) {
+			err = -errno;
+			goto out_put_ctx;
+		}
+
+		rx->mask = xsk->config.rx_size - 1;
+		rx->size = xsk->config.rx_size;
+		rx->producer = rx_map + off.rx.producer;
+		rx->consumer = rx_map + off.rx.consumer;
+		rx->flags = rx_map + off.rx.flags;
+		rx->ring = rx_map + off.rx.desc;
+		rx->cached_prod = *rx->producer;
+		rx->cached_cons = *rx->consumer;
+	}
+	xsk->rx = rx;
+
+	if (tx) {
+		tx_map = mmap(NULL, off.tx.desc +
+			      xsk->config.tx_size * sizeof(struct xdp_desc),
+			      PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE,
+			      xsk->fd, XDP_PGOFF_TX_RING);
+		if (tx_map == MAP_FAILED) {
+			err = -errno;
+			goto out_mmap_rx;
+		}
+
+		tx->mask = xsk->config.tx_size - 1;
+		tx->size = xsk->config.tx_size;
+		tx->producer = tx_map + off.tx.producer;
+		tx->consumer = tx_map + off.tx.consumer;
+		tx->flags = tx_map + off.tx.flags;
+		tx->ring = tx_map + off.tx.desc;
+		tx->cached_prod = *tx->producer;
+		/* cached_cons is r->size bigger than the real consumer pointer
+		 * See xsk_prod_nb_free
+		 */
+		tx->cached_cons = *tx->consumer + xsk->config.tx_size;
+	}
+	xsk->tx = tx;
+
+	sxdp.sxdp_family = PF_XDP;
+	sxdp.sxdp_ifindex = ctx->ifindex;
+	sxdp.sxdp_queue_id = ctx->queue_id;
+	if (umem->refcount > 1) {
+		sxdp.sxdp_flags |= XDP_SHARED_UMEM;
+		sxdp.sxdp_shared_umem_fd = umem->fd;
+	} else {
+		sxdp.sxdp_flags = xsk->config.bind_flags;
+	}
+
+	err = bind(xsk->fd, (struct sockaddr *)&sxdp, sizeof(sxdp));
+	if (err) {
+		err = -errno;
+		goto out_mmap_tx;
+	}
+
+	pr_debug("libbpf_flags=0x%08x\n", xsk->config.libbpf_flags);
+	if (!(xsk->config.libbpf_flags & XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD)) {
+		pr_debug("Loading named eBPF program %s\n", named_prog) ;
+		err = __xsk_setup_named_xdp_prog(xsk, named_prog, NULL);
+		if (err)
+			goto out_mmap_tx;
+	}
+
+	*xsk_ptr = xsk;
+	umem->fill_save = NULL;
+	umem->comp_save = NULL;
+	return 0;
+
+out_mmap_tx:
+	if (tx)
+		munmap(tx_map, off.tx.desc +
+		       xsk->config.tx_size * sizeof(struct xdp_desc));
+out_mmap_rx:
+	if (rx)
+		munmap(rx_map, off.rx.desc +
+		       xsk->config.rx_size * sizeof(struct xdp_desc));
+out_put_ctx:
+	unmap = umem->fill_save != fill;
+	xsk_put_ctx(ctx, unmap);
+out_socket:
+	if (--umem->refcount)
+		close(xsk->fd);
+out_xsk_alloc:
+	free(xsk);
+	return err;
+}
+
 int xsk_socket__create(struct xsk_socket **xsk_ptr, const char *ifname,
 		       __u32 queue_id, struct xsk_umem *umem,
 		       struct xsk_ring_cons *rx, struct xsk_ring_prod *tx,
@@ -1159,6 +1517,20 @@ int xsk_socket__create(struct xsk_socket **xsk_ptr, const char *ifname,
 	return xsk_socket__create_shared(xsk_ptr, ifname, queue_id, umem,
 					 rx, tx, umem->fill_save,
 					 umem->comp_save, usr_config);
+}
+
+int xsk_socket__create_named_prog(struct xsk_socket **xsk_ptr, const char *ifname,
+		       __u32 queue_id, struct xsk_umem *umem,
+		       struct xsk_ring_cons *rx, struct xsk_ring_prod *tx,
+		       const struct xsk_socket_config *usr_config,
+			   const char *named_prog)
+{
+	if (!umem)
+		return -EFAULT;
+
+	return xsk_socket__create_shared(xsk_ptr, ifname, queue_id, umem,
+					 rx, tx, umem->fill_save,
+					 umem->comp_save, usr_config, named_prog);
 }
 
 int xsk_umem__delete(struct xsk_umem *umem)

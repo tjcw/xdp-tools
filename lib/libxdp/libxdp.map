@@ -72,5 +72,7 @@ LIBXDP_1.3.0 {
 		xdp_program__clone;
 		xdp_program__create;
 		xdp_program__attach_single;
+		xsk_socket__create_shared_named_prog;
+		xsk_socket__create_named_prog;
 		my_fetch_xsks_map_fd;
 } LIBXDP_1.2.0;
