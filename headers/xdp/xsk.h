@@ -241,6 +241,22 @@ int xsk_socket__create_shared(struct xsk_socket **xsk_ptr,
 			      struct xsk_ring_prod *fill,
 			      struct xsk_ring_cons *comp,
 			      const struct xsk_socket_config *config);
+int xsk_socket__create_named_prog(struct xsk_socket **xsk,
+		       const char *ifname, __u32 queue_id,
+		       struct xsk_umem *umem,
+		       struct xsk_ring_cons *rx,
+		       struct xsk_ring_prod *tx,
+		       const struct xsk_socket_config *config,
+			   const char *named_prog);
+int xsk_socket__create_shared_named_prog(struct xsk_socket **xsk_ptr,
+			      const char *ifname,
+			      __u32 queue_id, struct xsk_umem *umem,
+			      struct xsk_ring_cons *rx,
+			      struct xsk_ring_prod *tx,
+			      struct xsk_ring_prod *fill,
+			      struct xsk_ring_cons *comp,
+			      const struct xsk_socket_config *config,
+				  const char *named_prog);
 
 /* Returns 0 for success and -EBUSY if the umem is still in use. */
 int xsk_umem__delete(struct xsk_umem *umem);
