@@ -1528,7 +1528,7 @@ int xsk_socket__create_named_prog(struct xsk_socket **xsk_ptr, const char *ifnam
 	if (!umem)
 		return -EFAULT;
 
-	return xsk_socket__create_shared(xsk_ptr, ifname, queue_id, umem,
+	return xsk_socket__create_shared_named_prog(xsk_ptr, ifname, queue_id, umem,
 					 rx, tx, umem->fill_save,
 					 umem->comp_save, usr_config, named_prog);
 }
